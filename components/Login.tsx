@@ -3,20 +3,26 @@ import React, { useState } from 'react'
 import { Fugaz_One } from "next/font/google";
 import Button from './Button';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
 
 const fugazOne = Fugaz_One({ subsets: ["latin"], weight: ['400'] });
 
 export default function Login() {
+  const searchParams = useSearchParams();
+  const defaultRegister = searchParams.get('register') === 'true';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
+  const [isRegister, setIsRegister] = useState(defaultRegister);
   const [authenticating, setAuthenticating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [lastAction, setLastAction] = useState<'login' | 'signup' | null>(null);
 
   const { signup, login, resetPassword } = useAuth();
 
-  async function handleSubmit() {
+  async function handleSubmit(action: 'login' | 'signup') {
     setErrorMsg(''); // Clear previous errors
+    setLastAction(action);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       setErrorMsg('Please enter a valid email address.');
@@ -28,22 +34,22 @@ export default function Login() {
     }
     setAuthenticating(true);
     try {
-      if (isRegister) {
+      if (action === 'signup') {
         await signup(email, password);
       } else {
         await login(email, password);
       }
     } catch (error) {
       if (
-        isRegister &&
+        action === 'signup' &&
+        error &&
         typeof error === 'object' &&
-        error !== null &&
         'code' in error &&
-        (error as { code?: string }).code === 'auth/email-already-in-use'
+        error.code === 'auth/email-already-in-use'
       ) {
         setErrorMsg('This email is already registered. Please sign in instead.');
       } else {
-        setErrorMsg('Authentication error. Please try again.');
+        setErrorMsg('Account doesn\'t exist. Create one to continue');
       }
       console.error(error);
     } finally {
@@ -52,15 +58,16 @@ export default function Login() {
   }
 
   async function handleResetPassword() {
+    setErrorMsg('');
     if (!email) {
-      alert('Please enter your email address to reset your password.');
+      setErrorMsg('Please enter your email address to reset your password.');
       return;
     }
     try {
       await resetPassword(email);
-      alert('Password reset email sent!');
+      setErrorMsg('Password reset email sent!');
     } catch (error) {
-      alert('Error sending password reset email.');
+      setErrorMsg('Error sending password reset email.');
       console.error(error);
     }
   }
@@ -72,15 +79,51 @@ export default function Login() {
       {errorMsg && (
         <div className="text-red-600 font-bold mb-2">{errorMsg}</div>
       )}
-      <input value={email} onChange={(e) => setEmail(e.target.value)} className='w-full max-w-[400px] mx-auto px-3 py-2 sm:py-3 border bprder-solid border-[#ff8000] rounded-full outline-none durations-200 hover:border-[#005247] hover:text-[#005247] focus:border-[#005247]'
-        placeholder='Email' />
-      <input value={password} onChange={(e) => setPassword(e.target.value)} className='w-full max-w-[400px] mx-auto px-3 py-2 sm:py-3 border bprder-solid border-[#ff8000] rounded-full outline-none durations-200 hover:border-[#005247] hover:text-[#005247] focus:border-[#005247]'
-        placeholder='Password' type='password' />
-      <div className='max-w-[400px] w-full mx-auto'>
-        <Button clickHandler={handleSubmit} text={authenticating ? 'Submitting' : 'Submit'} full />
+      <input
+        value={email}
+        onChange={(e) => { setEmail(e.target.value); setErrorMsg(''); }}
+        className='w-full max-w-[400px] mx-auto px-3 py-2 sm:py-3 border bprder-solid border-[#ff8000] rounded-full outline-none durations-200 hover:border-[#005247] hover:text-[#005247] focus:border-[#005247]'
+        placeholder='Email'
+      />
+      <input
+        value={password}
+        onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
+        className='w-full max-w-[400px] mx-auto px-3 py-2 sm:py-3 border bprder-solid border-[#ff8000] rounded-full outline-none durations-200 hover:border-[#005247] hover:text-[#005247] focus:border-[#005247]'
+        placeholder='Password'
+        type='password'
+      />
+      <div className='max-w-[400px] w-full mx-auto flex gap-2'>
+        {isRegister ? (
+          <Button
+            clickHandler={() => handleSubmit('signup')}
+            text={authenticating ? 'Registering...' : 'Sign Up'}
+            full
+          />
+        ) : (
+          <Button
+            clickHandler={() => handleSubmit('login')}
+            text={authenticating ? 'Logging in...' : 'Sign In'}
+            full
+          />
+        )}
       </div>
-      <p className='text-center'>{isRegister ? 'Already have an account? ' : 'Don\'t have an account? '}<button onClick={() => { setIsRegister(!isRegister); setErrorMsg('');}} className='text-[#ff8000]'>{ isRegister ? 'Sign In' : 'Sign Up'}</button></p>
-      <p className='text-center text-[#ff8000]'>{!isRegister ? <button type='button' onClick={handleResetPassword}>Forgot Password?</button> : ''}</p>
+      <p className='text-center'>
+        {isRegister ? 'Already have an account? ' : 'Don\'t have an account? '}
+        <button
+          onClick={() => {
+            setIsRegister(!isRegister);
+            setErrorMsg('');
+          }}
+          className='text-[#ff8000]'
+        >
+          {isRegister ? 'Sign In' : 'Sign Up'}
+        </button>
+      </p>
+      <p className='text-center text-[#ff8000]'>
+        {!isRegister ? (
+          <button type='button' onClick={handleResetPassword}>Forgot Password?</button>
+        ) : ''}
+      </p>
     </div>
   )
 }
