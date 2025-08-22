@@ -2,8 +2,10 @@
 import React from 'react'
 import Login from "@/components/Login";
 import Loading from "@/components/Loading";
-import Main from "@/components/Main";
 import { useAuth } from "@/context/AuthContext";
+import Note from './Note';
+import SideNav from './SideNav';
+import NotesList from "./NotesList";
 
 export default function Dashboard() {
 
@@ -18,8 +20,8 @@ export default function Dashboard() {
     }
 
   return (
-    <div className='flex flex-col flex-1'>
-      <div>DASHBOARD</div>
+    <div className="flex flex-col flex-1">
+      <NotesList />
     </div>
-  )
+  );
 }

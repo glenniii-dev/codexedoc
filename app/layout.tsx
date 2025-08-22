@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({children}: Readonly<{children: React.ReactNode;}>) {
   const header = (
-    <header className="p-4 sm:p-8 flex items-center justify-between gap-4">
+    <header className="p-4 sm:p-8 flex items-center justify-between gap-4 bg-[#f8f8f8] sticky z-100">
       <Link href={'/'}>
       <h1 className={'text-lg sm:text-xl textGradient ' + fugazOne.className}>CODEXEDOC</h1>
       </Link>
