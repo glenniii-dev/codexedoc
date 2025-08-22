@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
 import { AuthProvider } from "@/context/AuthContext";
-import Head from "@/components/Head";
+import Head from 'next/head'
 import Logout from "@/components/Logout";
 
 const openSans = Open_Sans({ subsets: ["latin"] });
@@ -34,7 +34,9 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
 
   return (
     <html lang="en">
-      <Head />
+      <Head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css" integrity="sha512-DxV+EoADOkOygM4IR9yXP8Sb2qwgidEmeqAEmDKIOfPRQZOWbXCzLC6vjbZyy0vPisbH2SyW27+ddLVCN+OMzQ==" crossOrigin="anonymous" referrerPolicy="no-referrer" />
+      </Head>
       <AuthProvider>
       <body className={'bg-[#F8F8F8] w-full max-w-[1000px] mx-auto text-sm sm:text-base text-[#005247] min-h-screen flex flex-col ' + openSans.className}>
         {header}

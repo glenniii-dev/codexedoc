@@ -115,7 +115,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 content: doc.data().content,
                 starred: doc.data().starred || false,
                 })))
-            } catch (err) {
+            } catch (error) {
+                console.log(error)
                 setNotes([])
             } finally {
                 setNotesLoading(false)

@@ -7,13 +7,14 @@ import { Fugaz_One } from "next/font/google";
 import Button from './Button';
 
 const fugazOne = Fugaz_One({ subsets: ["latin"], weight: ['400'] });
+type Note = { id: string; title: string; content: string; starred?: boolean };
 
 export default function NotesList() {
   const { notes, setNotes, notesLoading, deleteNote, updateNote } = useAuth();
-  const [selected, setSelected] = useState(null);
-  const [viewer, setViewer] = useState(null);
+  const [selected, setSelected] = useState<Note | null>(null);
+  const [viewer, setViewer] = useState<Note | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string } | null>(null);
   const [sortOrder, setSortOrder] = useState('title');
 
   const filteredNotes = useMemo(() => {
@@ -42,12 +43,14 @@ export default function NotesList() {
 
   if (notesLoading) return <Loading />;
 
-  const handleDelete = (note: React.SetStateAction<null>) => {
+  const handleDelete = (note: { id: string }) => {
     setConfirmDelete(note);
   };
 
   const handleConfirmDelete = () => {
-    deleteNote(confirmDelete.id);
+    if (confirmDelete) {
+      deleteNote(confirmDelete.id);
+    }
     setConfirmDelete(null);
   };
 
@@ -55,7 +58,7 @@ export default function NotesList() {
     setConfirmDelete(null);
   };
 
-  const handleToggleStar = (note: { id: any; title?: string; content?: string; starred?: any; }) => {
+  const handleToggleStar = (note: { id: string; title?: string; content?: string; starred?: boolean; }) => {
     const updatedNote = {
       ...note,
       starred: !note.starred,
@@ -86,7 +89,7 @@ export default function NotesList() {
           />
           <Button
             text="New Note"
-            clickHandler={() => setSelected({ title: '', content: '' })}
+            clickHandler={() => setSelected({ id: '', title: '', content: '' })}
             dark={true}
             small={true}
           />

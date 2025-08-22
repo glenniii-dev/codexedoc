@@ -5,7 +5,13 @@ import Button from './Button';
 
 const fugazOne = Fugaz_One({ subsets: ["latin"], weight: ['400'] });
 
-export default function NoteEditor({ note, close }) {
+interface Note {
+  id?: string;
+  title: string;
+  content: string;
+}
+
+export default function NoteEditor({ note, close }: { note: Note; close: () => void }) {
   const { addNote, updateNote } = useAuth();
   const [title, setTitle] = useState(note.title || "");
   const [content, setContent] = useState(note.content || "");

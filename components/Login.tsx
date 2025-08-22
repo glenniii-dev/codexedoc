@@ -20,9 +20,9 @@ export default function Login() {
 
   const { signup, login, resetPassword } = useAuth();
 
-  async function handleSubmit(action: 'login' | 'signup') {
+  async function handleSubmit(lastAction: 'login' | 'signup') {
     setErrorMsg(''); // Clear previous errors
-    setLastAction(action);
+    setLastAction(lastAction);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
       setErrorMsg('Please enter a valid email address.');
@@ -34,14 +34,14 @@ export default function Login() {
     }
     setAuthenticating(true);
     try {
-      if (action === 'signup') {
+      if (lastAction === 'signup') {
         await signup(email, password);
       } else {
         await login(email, password);
       }
     } catch (error) {
       if (
-        action === 'signup' &&
+        lastAction === 'signup' &&
         error &&
         typeof error === 'object' &&
         'code' in error &&
