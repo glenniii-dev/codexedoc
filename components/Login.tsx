@@ -49,7 +49,7 @@ export default function Login() {
       ) {
         setErrorMsg('This email is already registered. Please sign in instead.');
       } else {
-        setErrorMsg('Account doesn\'t exist. Create one to continue');
+        setErrorMsg('Athentication failed. Please check your credentials and try again.');
       }
       console.error(error);
     } finally {
