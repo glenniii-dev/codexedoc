@@ -16,7 +16,7 @@ export default function Login() {
   const [isRegister, setIsRegister] = useState(defaultRegister);
   const [authenticating, setAuthenticating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [lastAction, setLastAction] = useState<'login' | 'signup' | null>(null);
+  const [, setLastAction] = useState<'login' | 'signup' | null>(null);
 
   const { signup, login, resetPassword } = useAuth();
 

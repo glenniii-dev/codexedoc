@@ -37,7 +37,7 @@ export default function NoteEditor({ note, close }: { note: Note; close: () => v
         />
         <textarea
           rows={1}
-          className="w-full p-2 text-sm border border-[#005247] rounded focus:outline-[#ff8000] rounded scrollbar-hidden"
+          className="w-full p-2 text-sm border border-[#005247] rounded focus:outline-[#ff8000] scrollbar-hidden"
           style={{ minHeight: '400px' }}
           value={content}
           onChange={e => setContent(e.target.value)}
