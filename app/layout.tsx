@@ -33,7 +33,7 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
   // )
 
   return (
-    <html lang="en">
+    <html lang="en" className="bg-[#f8f8f8]">
       <Heading />
       <AuthProvider>
       <body className={'bg-[#F8F8F8] w-full max-w-[1000px] mx-auto text-sm sm:text-base text-[#005247] min-h-screen flex flex-col ' + openSans.className}>

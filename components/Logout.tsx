@@ -11,7 +11,7 @@ export default function Logout() {
     if (!currentUser) {
       return (
         <a href="mailto:glenniii.dev@gmail.com">
-          <Button text="Contact" />
+          <Button text="Contact" small={true} />
             {/* <button type="button" className="border-2 border-[#005247] text-[#005247] hover:border-[#ff8000] hover:text-[#ff8000] px-4 py-2 rounded-full font-bold">Contact</button> */}
         </a>
       )
@@ -20,14 +20,14 @@ export default function Logout() {
     if (pathname === '/') {
         return (
             <a href="mailto:glenniii.dev@gmail.com">
-              <Button text="Contact" />
+              <Button text="Contact" small={true} />
                 {/* <button type="button" className="border-2 border-[#005247] text-[#005247] hover:border-[#ff8000] hover:text-[#ff8000] px-4 py-2 rounded-full font-bold">Contact</button> */}
             </a>
         )
     }
 
     return (
-      <Button clickHandler={logout} text="Logout" />
+      <Button clickHandler={logout} text="Logout" small={true} />
         // <button onClick={logout} type="button" className="border-2 border-[#005247] text-[#005247] hover:border-[#ff8000] hover:text-[#ff8000] px-4 py-2 rounded-full font-bold">Logout</button>
     )
 }
