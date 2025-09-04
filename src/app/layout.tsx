@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { Source_Code_Pro } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/ui/theme-provider";
+import NavBar from "@/components/NavBar";
+import Sidebar from "@/components/Sidebar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+export const sourceCodePro = Source_Code_Pro({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -23,12 +22,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning>
+        <body
+          className={sourceCodePro.className}
+        >
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system" 
+            enableSystem 
+            disableTransitionOnChange>
+            <div className="min-h-screen">
+              <NavBar />
+
+              <main className="py-8">
+                {/* container to center the content */}
+                <div className="max-w-7xl mx-auto px-4">
+                  <div className="grid grid-col-1 lg:grid-cols-12 gap-6">
+                    <div className="hidden lg:block lg:col-span-3">
+                      <Sidebar />
+                    </div>
+                    <div className="lg:col-span-9">{children}</div>
+                  </div>
+                </div>
+              </main>
+
+            </div>
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
