@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma"
 import { currentUser } from "@clerk/nextjs/server";
-import CreatePost from "./components/CreatePost";
+import CreatePost from "@/components/CreatePost";
+import Suggested from "@/components/Suggested";
 
 export default async function HomePage() {
   const user = await currentUser();
@@ -11,7 +12,7 @@ export default async function HomePage() {
       </div>
 
       <div className=" hidden lg:col-span-4 sticky top-20">
-        WhoToFollow
+        <Suggested />
       </div>
     </div>
   );

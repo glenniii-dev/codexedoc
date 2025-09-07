@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import NavBar from "@/components/NavBar";
 import Sidebar from "@/components/Sidebar";
+import { Toaster } from "react-hot-toast";
 
 export const sourceCodePro = Source_Code_Pro({
   subsets: ["latin"],
@@ -48,6 +49,7 @@ export default function RootLayout({
               </main>
 
             </div>
+            <Toaster />
           </ThemeProvider>
         </body>
       </html>
