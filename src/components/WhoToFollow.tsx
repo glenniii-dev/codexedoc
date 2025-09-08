@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import FollowButton from "./FollowButton";
 
-export default async function Suggested() {
+export default async function WhoToFollow() {
   const users = await getRandomUsers();
 
   if (users.length === 0) return null;
@@ -32,11 +32,11 @@ export default async function Suggested() {
                   <p className="text-muted-foreground">{user._count.followers} followers</p>
                 </div>
               </div>
-               <FollowButton userId={user.id} />
+              <FollowButton userId={user.id} />
             </div>
           ))}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

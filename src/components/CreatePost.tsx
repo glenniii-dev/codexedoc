@@ -11,6 +11,15 @@ import { createPost } from "@/actions/post.action";
 import toast from "react-hot-toast";
 // import ImageUpload from "./ImageUpload";
 
+// CHECK FOR BAD WORDS
+import { Filter } from 'bad-words';
+
+const filterBadWords = (text: string) => {
+  const filter = new Filter();
+  const filteredText = filter.clean(text);
+  return filteredText;
+};
+
 function CreatePost() {
   const { user } = useUser();
   const [content, setContent] = useState("");
@@ -21,9 +30,11 @@ function CreatePost() {
   const handleSubmit = async () => {
     if (!content.trim() && !imageUrl) return;
 
+    const filteredContent = filterBadWords(content);
+
     setIsPosting(true);
     try {
-      const result = await createPost(content, imageUrl);
+      const result = await createPost(filteredContent, imageUrl);
       if (result?.success) {
         // reset the form
         setContent("");
@@ -42,50 +53,24 @@ function CreatePost() {
 
   return (
     <Card className="mb-6">
-      <CardContent className="pt-6">
+      <CardContent className="pt-2">
         <div className="space-y-4">
           <div className="flex space-x-4">
             <Avatar className="w-10 h-10">
               <AvatarImage src={user?.imageUrl || "/avatar.png"} />
             </Avatar>
             <Textarea
-              placeholder="What's on your mind?"
-              className="min-h-[100px] resize-none border-none focus-visible:ring-0 p-0 text-base"
+              placeholder="What have you been creating with code?"
+              className="min-h-[100px] resize-none border-none p-0 text-base p-2 focus-visible:outline-none"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               disabled={isPosting}
             />
           </div>
 
-          {/* {(showImageUpload || imageUrl) && (
-            <div className="border rounded-lg p-4">
-              <ImageUpload
-                endpoint="postImage"
-                value={imageUrl}
-                onChange={(url) => {
-                  setImageUrl(url);
-                  if (!url) setShowImageUpload(false);
-                }}
-              />
-            </div>
-          )} */}
-
-          <div className="flex items-center justify-between border-t pt-4">
-            <div className="flex space-x-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-primary"
-                onClick={() => setShowImageUpload(!showImageUpload)}
-                disabled={isPosting}
-              >
-                <ImageIcon className="size-4 mr-2" />
-                Photo
-              </Button>
-            </div>
+          <div className="flex items-center justify-end">
             <Button
-              className="flex items-center"
+              className="flex items-center w-[445px]"
               onClick={handleSubmit}
               disabled={(!content.trim() && !imageUrl) || isPosting}
             >

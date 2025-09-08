@@ -8,11 +8,11 @@ import { Avatar, AvatarImage } from "./ui/avatar";
 import { Separator } from "./ui/separator";
 import { LinkIcon, MapPinIcon } from "lucide-react";
 
-async function Sidebar() {
+export default async function Sidebar() {
   const authUser = await currentUser();
   if (!authUser) return <UnAuthenticatedSidebar />;
 
-  const user = await getUserByClerkId(authUser.id); // POST bc this is a server action
+  const user = await getUserByClerkId(authUser.id);
   if (!user) return null;
 
   return (
@@ -30,7 +30,7 @@ async function Sidebar() {
 
               <div className="mt-4 space-y-1">
                 <h3 className="font-semibold">{user.name}</h3>
-                <p className="text-sm text-muted-foreground">@{user.username}</p>
+                <p className="text-sm text-muted-foreground">{user.username}</p>
               </div>
             </Link>
 
@@ -74,8 +74,6 @@ async function Sidebar() {
     </div>
   );
 }
-
-export default Sidebar;
 
 const UnAuthenticatedSidebar = () => (
   <div className="sticky top-20">
