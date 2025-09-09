@@ -17,3 +17,7 @@ Possibly switch from neon to another way.
 Add favicons
 
 Add A welcome popup for users that arent logged in.
+
+Make it so you can manage who you are following
+
+athentication bugs

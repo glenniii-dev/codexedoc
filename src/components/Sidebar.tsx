@@ -10,7 +10,7 @@ import { LinkIcon, MapPinIcon } from "lucide-react";
 
 export default async function Sidebar() {
   const authUser = await currentUser();
-  if (!authUser) return <UnAuthenticatedSidebar />;
+  if (!authUser) return null;
 
   const user = await getUserByClerkId(authUser.id);
   if (!user) return null;
@@ -76,7 +76,7 @@ export default async function Sidebar() {
 }
 
 const UnAuthenticatedSidebar = () => (
-  <div className="sticky top-20">
+  <div className="justify-center align-center">
     <Card>
       <CardHeader>
         <CardTitle className="text-center text-xl font-semibold">Welcome Back!</CardTitle>
@@ -87,7 +87,7 @@ const UnAuthenticatedSidebar = () => (
         </p>
         <SignInButton mode="modal">
           <Button className="w-full" variant="outline">
-            Login
+            Sign In
           </Button>
         </SignInButton>
         <SignUpButton mode="modal">

@@ -12,11 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useState } from "react";
-import { useAuth, SignInButton, SignOutButton } from "@clerk/nextjs";
+import { useAuth, SignInButton, SignOutButton, SignUpButton } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
-function MobileNavbar() {
+export default function MobileNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const { isSignedIn } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -74,11 +74,18 @@ function MobileNavbar() {
                 </SignOutButton>
               </>
             ) : (
-              <SignInButton mode="modal">
-                <Button variant="default" className="w-auto mx-8">
-                  Sign In
-                </Button>
-              </SignInButton>
+              <>
+                <SignInButton mode="modal">
+                  <Button variant="default" className="w-auto mx-4">
+                    Sign In
+                  </Button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <Button variant="default" className="w-auto mx-4">
+                    Sign Up
+                  </Button>
+                </SignUpButton>
+              </>
             )}
           </nav>
         </SheetContent>
@@ -86,5 +93,3 @@ function MobileNavbar() {
     </div>
   );
 }
-
-export default MobileNavbar;

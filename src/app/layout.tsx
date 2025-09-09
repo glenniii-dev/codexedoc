@@ -7,6 +7,7 @@ import NavBar from "@/components/NavBar";
 import Sidebar from "@/components/Sidebar";
 import { Toaster } from "react-hot-toast";
 import { DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Head from "next/head";
 
 export const sourceCodePro = Source_Code_Pro({
   subsets: ["latin"],
@@ -27,6 +28,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" suppressHydrationWarning>
+      <Head>
+        <meta name="apple-mobile-web-app-title" content="CODEXEDOC" />
+      </Head>
         <body
           className={sourceCodePro.className}
         >
