@@ -63,14 +63,16 @@ export default function ThreadCard({
               {content}
             </p>
 
-            <div className="mt-5 flex flex-col gap-3">
-              <div className="flex gap-3.5">
-                <Image src="/assets/heart-gray.svg" alt="heart" width={24} height={24} className="cursor-pointer" />
-                <Link href={`/thread/${id}`}>
-                  <Image src="/assets/reply.svg" alt="reply" width={24} height={24} className="cursor-pointer" />
+            <div className="mt-5 flex flex-row gap-3">
+              <div className="flex gap-3.5 flex-row text-neutral-400">
+                <button className="flex flex-row gap-1">
+                  <Image src="/assets/heart-gray.svg" alt="heart" width={24} height={24} className="cursor-pointer" />Like
+                </button>
+                <Link href={`/thread/${id}`} className="flex flex-row gap-1">
+                  <Image src="/assets/reply.svg" alt="reply" width={24} height={24} className="cursor-pointer" />Reply
                 </Link>
-                <Image src="/assets/repost.svg" alt="repost" width={24} height={24} className="cursor-pointer" />
-                <Image src="/assets/share.svg" alt="share" width={24} height={24} className="cursor-pointer" />
+                {/* <Image src="/assets/repost.svg" alt="repost" width={24} height={24} className="cursor-pointer" />
+                <Image src="/assets/share.svg" alt="share" width={24} height={24} className="cursor-pointer" /> */}
               </div>
             </div>
 
