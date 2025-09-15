@@ -59,7 +59,9 @@ export default function ThreadCard({
             </Link>
 
             <p className="mt-2 text-sm text-neutral-200">
-              {content}
+              <Link href={`/thread/${id}`} className="flex flex-row gap-1">
+                {content}
+              </Link>
             </p>
 
             <div className={`${isComment && 'mb-8'} mt-5 flex flex-row gap-3 `}>
