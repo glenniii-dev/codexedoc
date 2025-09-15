@@ -1,6 +1,7 @@
 "use client";
 
 import { sidebarLinks } from "@/constants";
+import { useAuth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,6 +9,7 @@ import { usePathname } from "next/navigation";
 export default function Bottombar() {
 
   const pathname = usePathname();
+  const { userId } = useAuth();
 
   return (
     <section className="fixed bottom-0 z-10 w-full rounded-t-3xl bg-linear-to-t from-neutral-800 to-black p-4 xs:px-7 md:hidden">
@@ -17,7 +19,7 @@ export default function Bottombar() {
 
           return (
           <Link 
-          href={link.route} 
+          href={link.label === "Profile" ? `/profile/${userId}` : link.route}
           key={link.label} className={`relative flex flex-col items-center gap-2 rounded-lg p-2 sm:flex-1 sm:px-2 sm:py-2.5 bg-radial from-neutral-800 to-black ${isActive && ' border-[1.5px] border-white'}`}
           >
             <Image

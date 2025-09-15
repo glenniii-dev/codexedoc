@@ -1,6 +1,6 @@
 "use client";
 import { sidebarLinks } from "@/constants"
-import { SignedIn, SignOutButton } from "@clerk/nextjs";
+import { SignedIn, SignOutButton, useAuth } from "@clerk/nextjs";
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -8,6 +8,7 @@ import { usePathname, useRouter } from "next/navigation"
 export default function LeftSidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { userId } = useAuth();
 
   return (
     <section className="scrollbar-hidden sticky left-0 top-0 z-20 flex h-screen w-fit flex-col justify-between overflow-auto bg-neutral-950 pt-28 max-md:hidden">
@@ -17,8 +18,9 @@ export default function LeftSidebar() {
 
           return (
           <Link 
-          href={link.route} 
-          key={link.label} className={`relative flex justify-start gap-4 rounded-lg p-4 bg-neutral-950 ${isActive && 'border-[1.5px] border-white'}`}
+          href={link.label === "Profile" ? `/profile/${userId}` : link.route}  
+          key={link.label} 
+          className={`relative flex justify-start gap-4 rounded-lg p-4 bg-neutral-950 ${isActive && 'border-[1.5px] border-white'}`}
           >
             <Image
               src={link.imgURL} 

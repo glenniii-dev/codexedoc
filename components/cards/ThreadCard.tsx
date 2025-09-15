@@ -27,7 +27,6 @@ interface Props {
 }
 
 export default function ThreadCard({
-  key,
   id,
   currentUserId,
   parentId,
@@ -63,7 +62,7 @@ export default function ThreadCard({
               {content}
             </p>
 
-            <div className="mt-5 flex flex-row gap-3">
+            <div className={`${isComment && 'mb-8'} mt-5 flex flex-row gap-3 `}>
               <div className="flex gap-3.5 flex-row text-white">
                 <button className="flex flex-row gap-1">
                   <Image src="/assets/heart-gray.svg" alt="heart" width={24} height={24} className="cursor-pointer" />Like
