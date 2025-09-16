@@ -20,6 +20,7 @@ export default function ProfileHeader({ accountId, authUserId, name, username, i
               alt="profile image"
               fill
               className="rounded-full object-cover shadow-2xl"
+              unoptimized
             />
           </div>
 

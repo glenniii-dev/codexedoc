@@ -41,6 +41,7 @@ export default async function Page({ params }: { params: { id: string } }) {
                   width={24}
                   height={24}
                   className="object-contain"
+                  unoptimized
                 />
                 <p className="max-sm:hidden">{tab.label}</p>
 

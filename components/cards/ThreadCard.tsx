@@ -46,7 +46,8 @@ export default function ThreadCard({
               <Image 
                 src={author.image} alt="profile image" 
                 fill 
-                className="cursor-pointer rounded-full" 
+                className="cursor-pointer rounded-full"
+                unoptimized
               />
             </Link>
 

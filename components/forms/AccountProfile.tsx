@@ -65,6 +65,11 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
 
       fileReader.readAsDataURL(file);
     }
+
+    const file = e.target.files && e.target.files[0];
+    if (file && file.size > 1048576) {
+      alert('Max file size is 1MB');
+    }
   }
 
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
@@ -116,15 +121,17 @@ const AccountProfile = ({ user, btnTitle }: Props) => {
                     height={96}
                     priority
                     className="rounded-full object-contain"
+                    unoptimized
                   />
-                ) : (
-                  <Image 
-                    src="/assets/profile.svg"
-                    alt="profile photo"
-                    width={24}
-                    height={24}
-                    className="object-contain"
-                  />
+                ) : (              
+                    <Image 
+                      src="/assets/profile.svg"
+                      alt="profile photo"
+                      width={24}
+                      height={24}
+                      className="object-contain"
+                      unoptimized
+                    />
                 )}
               </FormLabel>
               <FormControl className="flex-1 text-md text-neutral-400 border-none">

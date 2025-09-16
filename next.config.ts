@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     globalNotFound: true,
   },
   images: {
+    
     remotePatterns: [
       {
         protocol: "https",

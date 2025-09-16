@@ -24,6 +24,7 @@ export default function UserCard({ id, name, username, imgUrl, personType }: Pro
           width={48}
           height={48}
           className="rounded-full"
+          unoptimized
         />
 
         <div className="flex-1 text-ellipsis">

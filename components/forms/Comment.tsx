@@ -59,6 +59,7 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
                     width={48}
                     height={48}
                     className="rounded-full object-cover"
+                    unoptimized
                   />
                 </FormLabel>
                 <FormControl>
