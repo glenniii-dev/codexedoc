@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
 
 interface Props {
   accountId: string;
@@ -28,6 +31,35 @@ export default function ProfileHeader({ accountId, authUserId, name, username, i
             <h2 className="text-left text-2xl font-bold text-white">{name}</h2>
             <p className="text-left text-sm text-neutral-400">@{username}</p>
           </div>
+        </div>
+        <div className="flex items-center">
+          {
+            accountId === authUserId && (
+              <Link href="/edit-profile">
+                <Image
+                  src="/assets/edit.svg"
+                  alt="edit"
+                  width={24}
+                  height={24}
+                />
+              </Link>
+            )
+          }
+          {
+            accountId !== authUserId && (
+              <button type="button" onClick={() => { 
+                navigator.clipboard.writeText(window.location.href);
+                alert('Copied to clipboard');
+                }}>
+                <Image
+                  src="/assets/share.svg"
+                  alt="share"
+                  width={35}
+                  height={35}
+                />
+              </button>
+            )
+          }
         </div>
       </div>
 

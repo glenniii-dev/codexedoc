@@ -15,6 +15,7 @@ import { isBase64Image } from "@/lib/utils";
 import { useUploadThing } from "@/lib/uploadthing";
 import { updateUser } from "@/lib/actions/user.actions";
 import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 type Props = {
   userId: string;
@@ -26,11 +27,12 @@ type Props = {
   btnTitle: string;
 };
 
-const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle }: Props) => {
+const UpdateProfile = ({ userId, objectId, username, name, bio, image, btnTitle }: Props) => {
   const [files, setFiles] = useState<File[]>([]);
   const { startUpload } = useUploadThing("media");
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useUser();
 
   const form = useForm({
     resolver: zodResolver(UserValidation),
@@ -41,6 +43,8 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
       bio: bio || '',
     },
   })
+
+  if (!user) return null;
 
   const handleImage = (e: ChangeEvent<HTMLInputElement>, fieldChange: (value: string) => void) => {
     e.preventDefault();
@@ -70,33 +74,30 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
   }
 
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
-    const blob = values.profile_photo;
+    try {
+      // Update the user in the database
+      await updateUser({
+        userId: userId,
+        username: values.username,
+        name: values.name,
+        bio: values.bio,
+        image: values.profile_photo,
+        path: pathname
+      });
 
-    const hasImageChanged = isBase64Image(blob);
+      // Handle the photo update
+      const selectedFile = values.profile_photo;
+      await user.setProfileImage({ file: selectedFile });
 
-    if (hasImageChanged) {
-      const imgRes = await startUpload(files);
+      router.push(`/profile/${user.id}`);
 
-      if (imgRes && imgRes[0].ufsUrl) {
-      values.profile_photo = imgRes[0].ufsUrl;
-      }
+    } catch (error) {
+      // Handle any errors
+      console.error("Error updating profile:", error);
+      // Show an error message or handle the error in some other way
+      // ...
     }
-
-    await updateUser({
-      userId: userId,
-      username: values.username,
-      name: values.name,
-      bio: values.bio,
-      image: values.profile_photo,
-      path: pathname
-    });
-
-    if (pathname === 'profile/edit') {
-      router.back();
-    } else {
-      router.push('/');
-    }
-  }
+  };
   
   return (
     <Form {...form}>
@@ -167,26 +168,6 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
 
         <FormField
           control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-3 w-full">
-              <FormLabel className="text-neutral-200 text-lg font-semibold">
-                Username
-              </FormLabel>
-              <FormControl className="border-none">
-                <Input 
-                  type="text"
-                  className="bg-neutral-800 text-white focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="bio"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-3 w-full">
@@ -205,10 +186,10 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
           )}
         />
 
-        <Button type="submit" className="bg-neutral-700 hover:bg-neutral-800 font-semibold">Submit</Button>
+        <Button type="submit" className="bg-neutral-700 hover:bg-neutral-800 font-semibold" onClick={() => form.handleSubmit(onSubmit)}>Submit</Button>
       </form>
     </Form>
   )
 };
 
-export default AccountProfile;
+export default UpdateProfile;

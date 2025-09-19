@@ -31,38 +31,33 @@ export default async function Page({ params }: { params: { id: string } }) {
       />
 
       <div className="mt-9">
-        <Tabs defaultValue="threads" className="w-full">
-          <TabsList className="w-full flex min-h-[50px] flex-1 items-center gap-3 bg-neutral-900 text-neutral-400 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-400">
-            {profileTabs.map((tab) => (
-              <TabsTrigger key={tab.label} value={tab.value} className="flex min-h-[50px] flex-1 items-center gap-3 bg-neutral-900 text-neutral-400 data-[state=active]:bg-neutral-800 data-[state=active]:text-neutral-400">
+        <div className="w-full">
+          {/* <div className="w-full flex min-h-[50px] flex-1 items-center gap-3 bg-neutral-900 text-neutral-400">
+              <div className="flex min-h-[50px] flex-1 items-center gap-3 text-neutral-400">
                 <Image 
-                  src={tab.icon}
-                  alt={tab.label}
+                  src={'/assets/reply.svg'}
+                  alt={'reply icon'}
                   width={24}
                   height={24}
                   className="object-contain"
                   unoptimized
                 />
-                <p className="max-sm:hidden">{tab.label}</p>
-
-                {tab.label === "Threads" && (
-                  <p className="ml-1 rounded-sm bg-neutral-400 px-2 py-1 text-[10px] font-medium text-neutral-900">
-                    {userInfo?.threads?.length}
-                  </p>
-                )}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+                <p className="max-sm:hidden">Threads</p>
+                <p className="bg-neutral-400 px-2 py-1 text-[10px] font-medium text-neutral-900">
+                  {userInfo?.threads?.length}
+                </p>
+              </div>
+          </div> */}
           {profileTabs.map((tab) => (
-            <TabsContent key={`content-${tab.label}`} value={tab.value} className="w-full text-white">
+            <div key={`content-${tab.label}`} className="w-full text-white">
               <ThreadsTab
                 currentUserId={user.id}
                 accountId={userInfo.id}
                 accountType="User"
               />
-            </TabsContent>
+            </div>
           ))}
-        </Tabs>
+        </div>
       </div>
     </section>
   )

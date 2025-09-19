@@ -21,6 +21,7 @@ const eslintConfig = [
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/non-null-assertion": "error",
     },
   },
 ];
