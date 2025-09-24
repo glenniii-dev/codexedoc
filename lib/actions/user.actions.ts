@@ -70,23 +70,81 @@ export async function fetchUserPosts(userId: string) {
     // find all threads created by the user with the given userIds
 
     // TODO: Populate Community
-    const threads = await User
-    .findOne({ id: userId })
-    .populate({
-      path: 'threads',
-      model: Thread,
-      populate: {
-        path: 'children',
-        model: 'Thread',
+    const userDoc: any = await User
+      .findOne({ id: userId })
+      .populate({
+        path: 'threads',
+        model: Thread,
         populate: {
-          path: 'author',
-          model: 'User',
-          select: 'name image id'
+          path: 'children',
+          model: 'Thread',
+          populate: {
+            path: 'author',
+            model: 'User',
+            select: 'name image id'
+          }
         }
-      }
-    })
+      })
+      .lean({ virtuals: true });
 
-    return threads
+    if (!userDoc) return null;
+
+    // Helpers to serialize buffer-like fields and typed arrays
+    function isArrayBufferView(v: any) {
+      if (typeof ArrayBuffer !== 'undefined') {
+        return ArrayBuffer.isView ? ArrayBuffer.isView(v) : v instanceof Uint8Array;
+      }
+      return v instanceof Uint8Array;
+    }
+
+    function bufferFromTyped(v: any) {
+      try {
+        if (typeof Buffer !== 'undefined') {
+          if (isArrayBufferView(v)) return Buffer.from(v).toString('base64');
+          if (v instanceof ArrayBuffer) return Buffer.from(new Uint8Array(v)).toString('base64');
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function deepSerialize(value: any): any {
+      if (value == null) return value;
+      const t = typeof value;
+      if (t === 'string' || t === 'number' || t === 'boolean') return value;
+      try {
+        if (typeof Buffer !== 'undefined' && Buffer.isBuffer(value)) return value.toString('base64');
+      } catch (e) {}
+      const fromTyped = bufferFromTyped(value);
+      if (fromTyped) return fromTyped;
+      if (Array.isArray(value)) return value.map((v) => deepSerialize(v));
+      if (t === 'object') {
+        const out: any = {};
+        for (const k of Object.keys(value)) {
+          out[k] = deepSerialize(value[k]);
+        }
+        return out;
+      }
+      return value;
+    }
+
+    function normalizeThread(t: any) {
+      if (!t) return t;
+      const author = t.author ? { ...t.author, _id: t.author._id?.toString(), image: deepSerialize(t.author.image) } : null;
+      const community = t.community ? (typeof t.community === 'string' ? t.community : { ...t.community, _id: t.community._id?.toString(), image: deepSerialize(t.community.image) }) : null;
+      return deepSerialize({
+        ...t,
+        _id: t._id?.toString(),
+        parentId: t.parentId ?? null,
+        createdAt: t.createdAt?.toString(),
+        author,
+        community,
+        children: (t.children || []).map((c: any) => normalizeThread(c)),
+      });
+    }
+
+    const threads = (userDoc.threads || []).map((t: any) => normalizeThread(t));
+
+    return { ...userDoc, threads };
   } catch (error: any) {
     throw new Error(`Failed to fetch user posts: ${error.message}`);
   }

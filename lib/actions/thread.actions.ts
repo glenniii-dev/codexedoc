@@ -1,218 +1,247 @@
-"use server"; // Cannot directly create database actions on the browser or client side. Databases are mostly server or api oriented.
+"use server";
 
 import { revalidatePath } from "next/cache";
 import Thread from "../models/thread.model";
 import User from "../models/user.model";
 import { connectToDB } from "../mongoose";
-import Community from "../models/community.model";
 
-interface Params {
-  text: string,
-  author: string,
-  communityId: string | null,
-  path: string,
-}
+// Full implementation for thread actions including likes and thread CRUD.
 
-export async function createThread({ text, author, communityId, path }: Params) {
-  
-  try {
-    connectToDB();
-
-    const createdThread = await Thread.create(
-      {
-        text,
-        author,
-        community: null,
-      }
-    );
-
-    // Update user model
-    await User.findByIdAndUpdate(author, {
-      $push: { threads: createdThread._id },
-    });
-
-    revalidatePath(path);
-  } catch (error: any) {
-    throw new Error(`Failed to create thread: ${error.message}`);
-  }
-
-}
-
-export async function fetchThreads(pageNumber = 1, pageSize = 20) {
+export async function getLikeInfo(threadId: string) {
   connectToDB();
+  try {
+    const doc = await Thread.findById(threadId).populate({ path: "likes", select: "_id id name" });
+    return { likeCount: doc?.likes?.length ?? 0, likedBy: doc?.likes ?? [] };
+  } catch (err: any) {
+    throw new Error(`getLikeInfo failed: ${err?.message ?? err}`);
+  }
+}
 
-  // Calculate the number of posts to skip
-  const skipAmount = (pageNumber - 1) * pageSize;
+// Helper: convert Buffer-like or binary fields into plain strings
+function serializeMaybeBuffer(value: any) {
+  if (value == null) return value;
+  if (typeof value === 'string') return value;
+  try {
+    if (typeof Buffer !== 'undefined' && Buffer.isBuffer(value)) {
+      return value.toString('base64');
+    }
+  } catch (e) {
+    // ignore
+  }
 
-  // Fetch threads that have no parents (top-level threads)
-  const threadQuery = await Thread.find({ parentId: { $in: [null, undefined] } })
-    .sort({ createdAt: -1 }) // Sort by createdAt in descending order
-    .skip(skipAmount) // Skip the specified number of documents
-    .limit(pageSize) // Limit the number of documents returned
-    .populate({ path: "author", model: User })
-    .populate({ 
-      path: "children",
-      populate: {
-        path: "author",
-        model: User,
-        select: "_id name parentId image"
+  if (value && (value.buffer || value.data)) {
+    try {
+      if (value.buffer && typeof value.buffer === 'object') {
+        return Buffer.from(value.buffer).toString('base64');
       }
-    });
+      if (Array.isArray(value.data)) {
+        return Buffer.from(value.data).toString('base64');
+      }
+    } catch (e) {
+      // fallthrough
+    }
+  }
 
-  const totalThreadsCount = await Thread.countDocuments({ parentId: { $in: [null, undefined] } });
-
-  const threads = threadQuery;
-
-  const isNext = totalThreadsCount > skipAmount + threads.length;
-
-  return { threads, isNext };
+  return value;
 }
 
-export async function fetchThreadById(id: string) {
+function isArrayBufferView(v: any) {
+  if (typeof ArrayBuffer !== 'undefined') {
+    return ArrayBuffer.isView ? ArrayBuffer.isView(v) : v instanceof Uint8Array;
+  }
+  return v instanceof Uint8Array;
+}
+
+function bufferFromTyped(v: any) {
+  try {
+    if (typeof Buffer !== 'undefined') {
+      if (isArrayBufferView(v)) return Buffer.from(v).toString('base64');
+      if (v instanceof ArrayBuffer) return Buffer.from(new Uint8Array(v)).toString('base64');
+    }
+  } catch (e) {
+    // ignore
+  }
+  return null;
+}
+
+function deepSerialize(value: any): any {
+  if (value == null) return value;
+  // primitives
+  const t = typeof value;
+  if (t === 'string' || t === 'number' || t === 'boolean') return value;
+
+  // Buffer
+  try {
+    if (typeof Buffer !== 'undefined' && Buffer.isBuffer(value)) return value.toString('base64');
+  } catch (e) {}
+
+  // Typed arrays / ArrayBuffer
+  const fromTyped = bufferFromTyped(value);
+  if (fromTyped) return fromTyped;
+
+  // Arrays
+  if (Array.isArray(value)) return value.map((v) => deepSerialize(v));
+
+  // Objects: recursively process keys
+  if (t === 'object') {
+    const out: any = {};
+    for (const k of Object.keys(value)) {
+      try {
+        out[k] = deepSerialize(value[k]);
+      } catch (e) {
+        out[k] = value[k];
+      }
+    }
+    return out;
+  }
+
+  return value;
+}
+
+// Recursively normalize a thread document (or plain object) to remove Mongoose docs
+function normalizeThread(t: any): any {
+  if (!t) return t;
+  const author = t.author
+    ? { ...t.author, _id: t.author._id?.toString(), image: serializeMaybeBuffer(t.author.image) }
+    : null;
+  const community = t.community
+    ? (typeof t.community === 'string' ? t.community : { ...t.community, _id: t.community._id?.toString(), image: serializeMaybeBuffer(t.community.image) })
+    : null;
+
+  return deepSerialize({
+    ...t,
+    _id: t._id?.toString(),
+    parentId: t.parentId ?? null,
+    createdAt: t.createdAt?.toString(),
+    author,
+    community,
+    children: (t.children || []).map((c: any) => normalizeThread(c)),
+  });
+}
+
+export async function toggleLikeOnThread(threadId: string, externalUserId: string, path?: string) {
   connectToDB();
-
   try {
+    const thread = await Thread.findById(threadId);
+    if (!thread) throw new Error("Thread not found");
 
-    // TODO Populate Community
-    const thread = await Thread.findById(id)
-      .populate({ 
-        path: "author", 
-        model: User,
-        select: "_id id name image"
-      })
-      .populate({ 
-        path: "children",
-        populate: [
-          {
-            path: "author",
-            model: User,
-            select: "_id id name parentId image"
-          },
-          {
-            path: "children",
-            model: Thread,
-            populate: {
-              path: "author",
-              model: User,
-              select: "_id id name parentId image"
-            }
-          }
-        ]
-      }).exec();
+    const user = await User.findOne({ id: externalUserId });
+    if (!user) throw new Error("User not found in application database");
 
-    return thread;
+    const userObjId = user._id;
+    const already = thread.likes?.some((u: any) => u.toString() === userObjId.toString());
 
-  } catch (error: any) {
-    throw new Error(`Failed to fetch thread: ${error.message}`);
-  }
-}
-
-async function fetchAllChildThreads(threadId: string): Promise<any[]> {
-  const childThreads = await Thread.find({ parentId: threadId });
-
-  const descendantThreads = [];
-  for (const childThread of childThreads) {
-    const descendants = await fetchAllChildThreads(childThread._id);
-    descendantThreads.push(childThread, ...descendants);
-  }
-
-  return descendantThreads;
-}
-
-export async function deleteThread(id: string, path: string): Promise<void> {
-  try {
-    connectToDB();
-
-    // Find the thread to be deleted (the main thread)
-    const mainThread = await Thread.findById(id).populate("author community");
-
-    if (!mainThread) {
-      throw new Error("Thread not found");
+    if (already) {
+      thread.likes = (thread.likes || []).filter((u: any) => u.toString() !== userObjId.toString());
+      await thread.save();
+      if (path) revalidatePath(path);
+      return { likeCount: thread.likes.length, liked: false };
     }
 
-    // Fetch all child threads and their descendants recursively
-    const descendantThreads = await fetchAllChildThreads(id);
-
-    // Get all descendant thread IDs including the main thread ID and child thread IDs
-    const descendantThreadIds = [
-      id,
-      ...descendantThreads.map((thread) => thread._id),
-    ];
-
-    // Extract the authorIds and communityIds to update User and Community models respectively
-    const uniqueAuthorIds = new Set(
-      [
-        ...descendantThreads.map((thread) => thread.author?._id?.toString()), // Use optional chaining to handle possible undefined values
-        mainThread.author?._id?.toString(),
-      ].filter((id) => id !== undefined)
-    );
-
-    const uniqueCommunityIds = new Set(
-      [
-        ...descendantThreads.map((thread) => thread.community?._id?.toString()), // Use optional chaining to handle possible undefined values
-        mainThread.community?._id?.toString(),
-      ].filter((id) => id !== undefined)
-    );
-
-    // Recursively delete child threads and their descendants
-    await Thread.deleteMany({ _id: { $in: descendantThreadIds } });
-
-    // Update User model
-    await User.updateMany(
-      { _id: { $in: Array.from(uniqueAuthorIds) } },
-      { $pull: { threads: { $in: descendantThreadIds } } }
-    );
-
-    // Update Community model
-    await Community.updateMany(
-      { _id: { $in: Array.from(uniqueCommunityIds) } },
-      { $pull: { threads: { $in: descendantThreadIds } } }
-    );
-
-    // Delete the main thread
-    await Thread.findByIdAndDelete(id);
-
-    revalidatePath(path);
-  } catch (error: any) {
-    throw new Error(`Failed to delete thread: ${error.message}`);
+    // add like
+    thread.likes = thread.likes || [];
+    thread.likes.push(userObjId);
+    await thread.save();
+    if (path) revalidatePath(path);
+    return { likeCount: thread.likes.length, liked: true };
+  } catch (err: any) {
+    throw new Error(`toggleLikeOnThread failed: ${err?.message ?? err}`);
   }
 }
 
-export async function addCommentToThread(
-  threadId: string,
-  commentText: string,
-  userId: string,
-  path: string
-) {
+// Minimal stubs so other imports don't fail while we repair.
+export async function createThread({ text, author, communityId, path }: any) {
   connectToDB();
-
   try {
-    // Find the original thread by its ID
-    const originalThread = await Thread.findById(threadId);
+    const created = await Thread.create({ text, author, community: communityId ?? null });
+    // add thread ref to user
+    await User.findByIdAndUpdate(author, { $push: { threads: created._id } });
+    if (path) revalidatePath(path);
+    return created;
+  } catch (err: any) {
+    throw new Error(`createThread failed: ${err?.message ?? err}`);
+  }
+}
+export async function fetchThreads(pageNumber: number = 1, pageSize: number = 20) {
+  connectToDB();
+  const skip = (pageNumber - 1) * pageSize;
+  try {
+    const docs = await Thread.find({ parentId: { $in: [null, undefined] } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .populate({ path: 'author', select: '_id id name image' })
+      .populate({ path: 'children', populate: { path: 'author', select: '_id id name image' } })
+      .lean({ virtuals: true });
+    const total = await Thread.countDocuments({ parentId: { $in: [null, undefined] } });
 
-    if (!originalThread) {
-      throw new Error("Thread not found");
+    // Normalize to plain JS objects with string ids/dates (recursively)
+    const threads = docs.map((d: any) => normalizeThread(d));
+
+    return { threads, isNext: total > skip + threads.length };
+  } catch (err: any) {
+    throw new Error(`fetchThreads failed: ${err?.message ?? err}`);
+  }
+}
+export async function fetchThreadById(id?: string) {
+  connectToDB();
+  try {
+    const doc = await Thread.findById(id)
+      .populate({ path: 'author', select: '_id id name image' })
+      .populate({ path: 'children', populate: [{ path: 'author', select: '_id id name parentId image' }, { path: 'children', model: Thread, populate: { path: 'author', select: '_id id name parentId image' } }] })
+      .lean({ virtuals: true });
+
+    if (!doc) return null;
+
+    // Use recursive normalizer to sanitize entire tree
+    return normalizeThread(doc);
+  } catch (err: any) {
+    throw new Error(`fetchThreadById failed: ${err?.message ?? err}`);
+  }
+}
+export async function deleteThread(id?: string, path?: string) {
+  connectToDB();
+  try {
+    if (!id) throw new Error('id required');
+    const main = await Thread.findById(id).populate('author');
+    if (!main) throw new Error('Thread not found');
+
+    // recursively find children
+    async function fetchAllChildren(tid: any): Promise<any[]> {
+      const children = await Thread.find({ parentId: tid });
+      const out: any[] = [];
+      for (const c of children) {
+        const desc = await fetchAllChildren(c._id);
+        out.push(c, ...desc);
+      }
+      return out;
     }
 
-    // Create the new comment thread
-    const commentThread = new Thread({
-      text: commentText,
-      author: userId,
-      parentId: threadId, // Set the parentId to the original thread's ID
-    });
+    const descendants = await fetchAllChildren(id);
+    const ids = [id, ...descendants.map((d) => d._id)];
 
-    // Save the comment thread to the database
-    const savedCommentThread = await commentThread.save();
-
-    // Add the comment thread's ID to the original thread's children array
-    originalThread.children.push(savedCommentThread._id);
-
-    // Save the updated original thread to the database
-    await originalThread.save();
-
-    revalidatePath(path);
-  } catch (err) {
-    console.error("Error while adding comment:", err);
-    throw new Error("Unable to add comment");
+    await Thread.deleteMany({ _id: { $in: ids } });
+    // remove thread refs from authors
+    const authorIds = Array.from(new Set([...(descendants.map((t) => t.author?.toString() || [])), main.author?.toString()].filter(Boolean)));
+    if (authorIds.length) await User.updateMany({ _id: { $in: authorIds } }, { $pull: { threads: { $in: ids } } });
+    if (path) revalidatePath(path);
+  } catch (err: any) {
+    throw new Error(`deleteThread failed: ${err?.message ?? err}`);
+  }
+}
+export async function addCommentToThread(threadId?: string, commentText?: string, userId?: any, path?: string) {
+  connectToDB();
+  try {
+    if (!threadId) throw new Error('threadId required');
+    const parent = await Thread.findById(threadId);
+    if (!parent) throw new Error('Parent thread not found');
+    const comment = new Thread({ text: commentText, author: userId, parentId: threadId });
+    const saved = await comment.save();
+    parent.children.push(saved._id);
+    await parent.save();
+    if (path) revalidatePath(path);
+    return saved;
+  } catch (err: any) {
+    throw new Error(`addCommentToThread failed: ${err?.message ?? err}`);
   }
 }

@@ -31,7 +31,7 @@ function DeleteThread({
       alt='delte'
       width={18}
       height={18}
-      className='cursor-pointer object-contain'
+      className='cursor-pointer object-contain ml-3'
       onClick={async () => {
         await deleteThread(JSON.parse(threadId), pathname);
         if (!parentId || !isComment) {

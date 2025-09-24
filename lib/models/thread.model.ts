@@ -26,6 +26,13 @@ const threadSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Thread'
     }
+  ],
+  // Likes: store user ObjectId references who liked this thread
+  likes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
   ] 
 });
 
