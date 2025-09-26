@@ -35,9 +35,9 @@ export default async function Page({
 
   return (
     <section>
-      <h1 className="text-3xl font-bold text-white mb-10">Search</h1>
+      <h1 className="text-3xl font-bold text-white mb-10">People</h1>
 
-      <Searchbar routeType='search' />
+      <Searchbar routeType='people' />
 
       <div className="mt-14 flex flex-col gap-9">
         {result.users.length === 0 ? (
@@ -59,7 +59,7 @@ export default async function Page({
       </div>
 
       <Pagination
-        path='search'
+        path='people'
         pageNumber={searchParams?.page ? +searchParams.page : 1}
         isNext={result.isNext}
       />

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 interface Props {
   accountId: string;
@@ -49,7 +50,7 @@ export default function ProfileHeader({ accountId, authUserId, name, username, i
             accountId !== authUserId && (
               <button type="button" onClick={() => { 
                 navigator.clipboard.writeText(window.location.href);
-                alert('Copied to clipboard');
+                toast.success('Copied to clipboard');
                 }}>
                 <Image
                   src="/assets/share.svg"

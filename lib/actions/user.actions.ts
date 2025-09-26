@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import User from "../models/user.model";
 import { connectToDB } from "../mongoose";
 import Thread from "../models/thread.model";
-import page from "@/app/(root)/activity/page";
+import page from "@/app/(root)/liked/page";
 import { FilterQuery, SortOrder } from "mongoose";
 
 interface Params {
@@ -48,16 +48,13 @@ export async function updateUser({
 
 }
 
-export async function fetchUser(userId: string) {
+export async function fetchUser(userId: string): Promise<any> {
   try {
     connectToDB();
-
-    return await User
-    .findOne({ id: userId })
-    // .populate({
-    //   path: 'communities',
-    //   model: 'Community'
-    // });
+    // Return a plain JS object to avoid sending Mongoose documents to client components
+    const userDoc = await User.findOne({ id: userId }).lean({ virtuals: true });
+    if (!userDoc) return null;
+    return userDoc;
   } catch (error: any) {
     throw new Error(`Failed to fetch user: ${error.message}`);
   }
@@ -204,25 +201,99 @@ export async function fetchUsers({
 export async function getActivity(userId: string) {
   try {
     connectToDB();
+    // Resolve the Mongo user _id. `userId` may be either the application's external id (User.id)
+    // or the Mongo `_id` string/object. Find the corresponding user document.
+    let mongoUser: any = null;
+    try {
+      // First try finding by external id field
+      mongoUser = await User.findOne({ id: userId }).lean();
+    } catch (e) {
+      // ignore
+    }
 
-    // find all threads created by the user
-    const userThreads = await Thread.find({ author: userId });
+    // If not found, and the passed userId looks like a Mongo ObjectId, try findById
+    const mongoose = require('mongoose');
+    if (!mongoUser) {
+      if (typeof userId === 'string' && mongoose.Types.ObjectId.isValid(userId)) {
+        mongoUser = await User.findById(userId).lean();
+      }
+    }
 
-    // Collect all the child thread ids (replies) from the 'children' field
-    const childThreadIds = userThreads.reduce((acc, userThread) => {
-      return acc.concat(userThread.children);
-    }, []);
+    if (!mongoUser) {
+      // No matching user in our DB — return empty activity list
+      return [];
+    }
 
-    const replies = await Thread.find({
-      _id: { $in: childThreadIds },
-      author: { $ne: userId }
-    }).populate({
-      path: 'author',
-      model: User,
-      select: 'name image _id'
-    })
+    // Debug: show resolved user early
+    try { if (process.env.DEBUG_ACTIVITY === '1') console.log('[getActivity] resolved local user:', mongoUser); } catch (e) {}
 
-    return replies
+    // Try matching ObjectId forms only. Avoid passing non-ObjectId external ids (like Clerk ids)
+    const targetId = new mongoose.Types.ObjectId(mongoUser._id);
+    const candidates: any[] = [targetId, targetId.toString()];
+
+    // if external id itself looks like a 24-hex ObjectId, include it as well
+    const externalId = mongoUser.id;
+    if (typeof externalId === 'string' && /^[a-fA-F0-9]{24}$/.test(externalId)) {
+      candidates.push(externalId);
+    }
+
+    const docs = await Thread.find({ likes: { $in: candidates } })
+      .populate({ path: 'author', model: User, select: 'name image _id' })
+      .lean({ virtuals: true });
+
+    // Optional debug logging when DEBUG_ACTIVITY=1 in env
+    try {
+      if (process.env.DEBUG_ACTIVITY === '1') {
+        console.log('[getActivity] resolved user:', { id: mongoUser.id, _id: mongoUser._id?.toString() });
+        console.log('[getActivity] query targetId:', targetId?.toString());
+        console.log('[getActivity] matched docs count:', (docs || []).length);
+        if (docs && docs.length) console.log('[getActivity] sample doc ids:', docs.slice(0,5).map((d: any) => d._id));
+      }
+    } catch (e) {
+      // ignore logging errors
+    }
+
+    // minimal buffer serializer (copied from thread.actions)
+    function serializeMaybeBuffer(value: any) {
+      if (value == null) return value;
+      if (typeof value === 'string') return value;
+      try {
+        if (typeof Buffer !== 'undefined' && Buffer.isBuffer(value)) {
+          return value.toString('base64');
+        }
+      } catch (e) {}
+
+      if (value && (value.buffer || value.data)) {
+        try {
+          if (value.buffer && typeof value.buffer === 'object') {
+            return Buffer.from(value.buffer).toString('base64');
+          }
+          if (Array.isArray(value.data)) {
+            return Buffer.from(value.data).toString('base64');
+          }
+        } catch (e) {}
+      }
+
+      return value;
+    }
+
+    function normalizeDoc(d: any) {
+      if (!d) return d;
+      const author = d.author ? { ...d.author, _id: d.author._id?.toString(), image: serializeMaybeBuffer(d.author.image) } : null;
+      const community = d.community ? (typeof d.community === 'string' ? d.community : { ...d.community, _id: d.community._id?.toString(), image: serializeMaybeBuffer(d.community?.image) }) : null;
+      return {
+        ...d,
+        _id: d._id?.toString(),
+        parentId: d.parentId ?? null,
+        createdAt: d.createdAt?.toString(),
+        author,
+        community,
+      };
+    }
+
+    const threads = (docs || []).map((d: any) => normalizeDoc(d));
+
+    return threads;
 
   } catch (error: any) {
     throw new Error(`Failed to fetch activity: ${error.message}`)

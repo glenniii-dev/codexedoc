@@ -5,6 +5,7 @@ import Link from "next/link";
 import React, { useEffect, useState } from "react";
 
 import DeleteThread from "../forms/DeleteThreads";
+import toast from "react-hot-toast";
 
 interface Props {
   id: string;
@@ -136,6 +137,17 @@ export default function ThreadCard(props: Props) {
                 <Link href={`/thread/${id}`} className="flex flex-row gap-1">
                   <Image src="/assets/reply.svg" alt="reply" width={24} height={24} className="cursor-pointer" />Reply
                 </Link>
+                <button type="button" className="flex flex-row gap-1" onClick={() => { 
+                  navigator.clipboard.writeText(window.location.href);
+                  toast.success('Copied to clipboard');
+                  }}>
+                  <Image
+                    src="/assets/share.svg"
+                    alt="share"
+                    width={24}
+                    height={24}
+                  />Share
+                </button>
               </div>
             </div>
 

@@ -16,6 +16,7 @@ import { useUploadThing } from "@/lib/uploadthing";
 import { updateUser } from "@/lib/actions/user.actions";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
+import toast from "react-hot-toast";
 
 type Props = {
   userId: string;
@@ -69,7 +70,7 @@ const UpdateProfile = ({ userId, objectId, username, name, bio, image, btnTitle 
 
     const file = e.target.files && e.target.files[0];
     if (file && file.size > 1048576) {
-      alert('Max file size is 1MB');
+      toast.error('Max file size is 1MB');
     }
   }
 

@@ -157,7 +157,8 @@ export async function createThread({ text, author, communityId, path }: any) {
     // add thread ref to user
     await User.findByIdAndUpdate(author, { $push: { threads: created._id } });
     if (path) revalidatePath(path);
-    return created;
+    // Return a plain JS object to avoid sending Mongoose documents back to client components
+    return normalizeThread(created.toObject ? created.toObject({ virtuals: true }) : created);
   } catch (err: any) {
     throw new Error(`createThread failed: ${err?.message ?? err}`);
   }
@@ -222,7 +223,26 @@ export async function deleteThread(id?: string, path?: string) {
 
     await Thread.deleteMany({ _id: { $in: ids } });
     // remove thread refs from authors
-    const authorIds = Array.from(new Set([...(descendants.map((t) => t.author?.toString() || [])), main.author?.toString()].filter(Boolean)));
+    // Helper to get a primitive id from either an ObjectId, a populated doc, or a string
+    function extractId(a: any) {
+      if (!a) return null;
+      try {
+        if (typeof a === 'string') return a;
+        if (a._id) return a._id.toString();
+        if (a.toString && typeof a.toString === 'function') return a.toString();
+      } catch (e) {
+        // fallthrough
+      }
+      return null;
+    }
+
+    const authorIds = Array.from(new Set(
+      [
+        ...descendants.map((t) => extractId(t.author)).filter(Boolean) as string[],
+        extractId(main.author),
+      ].filter(Boolean)
+    ));
+
     if (authorIds.length) await User.updateMany({ _id: { $in: authorIds } }, { $pull: { threads: { $in: ids } } });
     if (path) revalidatePath(path);
   } catch (err: any) {
@@ -240,7 +260,8 @@ export async function addCommentToThread(threadId?: string, commentText?: string
     parent.children.push(saved._id);
     await parent.save();
     if (path) revalidatePath(path);
-    return saved;
+    // Return a plain JS object for the saved comment
+    return normalizeThread(saved.toObject ? saved.toObject({ virtuals: true }) : saved);
   } catch (err: any) {
     throw new Error(`addCommentToThread failed: ${err?.message ?? err}`);
   }

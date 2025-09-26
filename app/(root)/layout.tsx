@@ -2,6 +2,7 @@ import { Source_Code_Pro } from "next/font/google";
 import "../globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { Toaster } from "react-hot-toast";
 
 import Topbar from "@/components/shared/Topbar";
 import LeftSidebar from "@/components/shared/LeftSidebar";
@@ -35,6 +36,7 @@ export default function RootLayout({
           ${sourceCodePro.className} scrollbar-hidden
         `}
       >
+        <Toaster position="top-center" />
         <Topbar />
 
         <main className="flex flex-row">
@@ -46,7 +48,7 @@ export default function RootLayout({
             </div>
           </section>
 
-          <RightSidebar />
+          {/* <RightSidebar /> */}
         </main>
 
         <Bottombar />
