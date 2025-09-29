@@ -4,11 +4,11 @@ export const sidebarLinks = [
     route: "/",
     label: "Home",
   },
-  // {
-  //   imgURL: "/assets/search.svg",
-  //   route: "/search",
-  //   label: "Search",
-  // },
+  {
+    imgURL: "/assets/search.svg",
+    route: "/search",
+    label: "Search",
+  },
   {
     imgURL: "/assets/heart.svg",
     route: "/liked",

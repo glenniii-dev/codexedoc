@@ -37,7 +37,7 @@ export default async function Page({
     <section>
       <h1 className="text-3xl font-bold text-white mb-10">People</h1>
 
-      <Searchbar routeType='people' />
+      <Searchbar routeType={'people'} />
 
       <div className="mt-14 flex flex-col gap-9">
         {result.users.length === 0 ? (

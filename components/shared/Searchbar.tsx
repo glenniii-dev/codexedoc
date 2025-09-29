@@ -40,8 +40,7 @@ function Searchbar({ routeType }: Props) {
         id='text'
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search for users..."
-
+        placeholder={routeType === "search" ? "Search Threads" : "Search Users"}
         className='no-focus border-neutral-400 bg-black text-base-regular text-neutral-400 outline-none'
       />
     </div>
@@ -49,7 +48,3 @@ function Searchbar({ routeType }: Props) {
 }
 
 export default Searchbar;
-
-{/*placeholder={`${
-          routeType !== "/search" ? "Search communities" : "Search creators"
-        }`}*/}

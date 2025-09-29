@@ -46,7 +46,7 @@ export default async function Page() {
             ))}
           </>
         ) : (
-          <p>No liked items yet</p>
+          <p className="text-neutral-400">No liked items yet</p>
         )}
       </section>
     </section>

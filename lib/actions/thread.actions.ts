@@ -266,3 +266,31 @@ export async function addCommentToThread(threadId?: string, commentText?: string
     throw new Error(`addCommentToThread failed: ${err?.message ?? err}`);
   }
 }
+export async function searchThreads(searchString?: string, pageNumber: number = 1, pageSize: number = 20) {
+  connectToDB();
+  const skip = (pageNumber - 1) * pageSize;
+  try {
+    if (!searchString) {
+      // fallback to listing threads
+      return fetchThreads(pageNumber, pageSize);
+    }
+
+    // Build a case-insensitive regex to search the text field
+    const regex = new RegExp(searchString.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), 'i');
+
+    const docs = await Thread.find({ parentId: { $in: [null, undefined] }, text: { $regex: regex } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .populate({ path: 'author', select: '_id id name image' })
+      .populate({ path: 'children', populate: { path: 'author', select: '_id id name image' } })
+      .lean({ virtuals: true });
+
+    const total = await Thread.countDocuments({ parentId: { $in: [null, undefined] }, text: { $regex: regex } });
+    const threads = docs.map((d: any) => normalizeThread(d));
+
+    return { threads, isNext: total > skip + threads.length };
+  } catch (err: any) {
+    throw new Error(`searchThreads failed: ${err?.message ?? err}`);
+  }
+}
