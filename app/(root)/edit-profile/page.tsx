@@ -19,7 +19,7 @@ export default async function Page() {
   }
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col justify-start px-5 lg:px-10">
+    <main className="mx-auto flex flex-col w-full justify-start px-5 lg:px-10">
       <h1 className="text-3xl font-bold text-white">Edit Profile</h1>
       <section className="mt-9 bg-neutral-900 p-10">
         <UpdateProfile

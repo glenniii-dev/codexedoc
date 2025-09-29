@@ -21,13 +21,14 @@ import { sanitizeText } from "@/lib/utils";
 type Props = {
   userId: string;
   objectId: string;
+  username?: string;
   name: string;
   bio: string;
   image: string;
   btnTitle: string;
 };
 
-const AccountProfile = ({ userId, objectId, name, bio, image, btnTitle }: Props) => {
+const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle }: Props) => {
   const [files, setFiles] = useState<File[]>([]);
   const [buttonTitle, setButtonTitle] = useState(btnTitle);
   const { startUpload } = useUploadThing("media");
@@ -38,6 +39,7 @@ const AccountProfile = ({ userId, objectId, name, bio, image, btnTitle }: Props)
     resolver: zodResolver(UserValidation),
     defaultValues: {
       profile_photo: image || '',
+      username: username || '',
       name: name || '',
       bio: bio || '',
     },
@@ -58,7 +60,11 @@ const AccountProfile = ({ userId, objectId, name, bio, image, btnTitle }: Props)
       fileReader.onload = async (event) => {
         const imageDataUrl = event.target?.result?.toString() || '';
 
-        fieldChange(imageDataUrl);
+        // Only set base64 into the form if it's under the 1MB limit.
+        // Sending large base64 strings to server actions can exceed Next's body size limit.
+        if (file.size <= 1048576) {
+          fieldChange(imageDataUrl);
+        }
       }
 
       fileReader.readAsDataURL(file);
@@ -66,7 +72,16 @@ const AccountProfile = ({ userId, objectId, name, bio, image, btnTitle }: Props)
 
     const file = e.target.files && e.target.files[0];
     if (file && file.size > 1048576) {
+      // Notify the user and clear the selected file so we don't try to upload/send it.
       toast.error('Max file size is 1MB');
+      // Clear controlled files state and the input value
+      setFiles([]);
+      // Clear the input element if possible
+      try {
+        const input = e.target as HTMLInputElement;
+        input.value = '';
+      } catch (e) {}
+      return;
     }
   }
 
@@ -159,6 +174,26 @@ const AccountProfile = ({ userId, objectId, name, bio, image, btnTitle }: Props)
             <FormItem className="flex flex-col gap-3 w-full">
               <FormLabel className="text-neutral-200 text-lg font-semibold">
                 Name
+              </FormLabel>
+              <FormControl className="border-none">
+                <Input 
+                  type="text"
+                  className="bg-neutral-800 text-white focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem className="flex flex-col gap-3 w-full">
+              <FormLabel className="text-neutral-200 text-lg font-semibold">
+                Username
               </FormLabel>
               <FormControl className="border-none">
                 <Input 

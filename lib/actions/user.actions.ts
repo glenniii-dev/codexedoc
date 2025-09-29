@@ -6,6 +6,7 @@ import { connectToDB } from "../mongoose";
 import Thread from "../models/thread.model";
 import page from "@/app/(root)/liked/page";
 import { FilterQuery, SortOrder } from "mongoose";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
 interface Params {
   userId: string;
@@ -27,6 +28,44 @@ export async function updateUser({
   connectToDB();
 
   try {
+    // First update the Clerk user so the identity provider reflects the change.
+    try {
+      // Build a minimal payload and validate username to avoid 422 Unprocessable errors from Clerk.
+      const payload: any = {};
+
+      // Only include username if provided and valid. Clerk validates usernames and may return 422.
+      if (username) {
+        const normalized = username.toLowerCase().trim();
+        // Basic validation: 3-30 chars, letters, numbers, dot, underscore, hyphen
+        const usernameRegex = /^[a-z0-9._-]{3,30}$/;
+        if (!usernameRegex.test(normalized)) {
+          throw new Error('Invalid username. Use 3-30 characters: letters, numbers, dot, underscore or hyphen.');
+        }
+        payload.username = normalized;
+      }
+
+      if (name) payload.firstName = name;
+
+      if (image) {
+        // Clerk types may not allow direct profileImageUrl updates depending on SDK version.
+        // Store the URL in publicMetadata so it's accessible and avoids strict typing issues.
+        payload.publicMetadata = { ...(payload.publicMetadata || {}), profileImageUrl: image };
+      }
+
+      // Only call Clerk if there's something to update
+      if (Object.keys(payload).length > 0) {
+        await clerkClient.users.updateUser(userId, payload);
+      }
+    } catch (clerkErr: any) {
+      // Clerk often returns structured errors; include as much detail as possible
+      let details = clerkErr?.message || JSON.stringify(clerkErr);
+      try {
+        if (clerkErr?.errors) details = JSON.stringify(clerkErr.errors);
+        else if (clerkErr?.response?.data) details = JSON.stringify(clerkErr.response.data);
+      } catch (e) {}
+      throw new Error(`Failed to update Clerk user: ${details}`);
+    }
+
     await User.findOneAndUpdate(
       { id: userId },
       { 
