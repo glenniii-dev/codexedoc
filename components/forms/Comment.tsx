@@ -14,6 +14,8 @@ import { CommentValidation } from "@/lib/validations/thread";
 import Image from "next/image";
 import { addCommentToThread } from "@/lib/actions/thread.actions";
 import { Textarea } from "../ui/textarea";
+import { sanitizeText } from "@/lib/utils";
+import toast from "react-hot-toast";
 // import { createThread } from "@/lib/actions/thread.actions";
 
 interface Props {
@@ -34,7 +36,11 @@ const Comment = ({ threadId, currentUserImg, currentUserId }: Props) => {
     });
   
     const onSubmit = async (values: z.infer<typeof CommentValidation>) => {
-      await addCommentToThread(threadId, values.thread, JSON.parse(currentUserId), pathname);
+      const sanitized = sanitizeText(values.thread || '');
+      if (sanitized.hasProfanity) {
+        toast("Profanity was filtered from your comment");
+      }
+      await addCommentToThread(threadId, sanitized.cleaned, JSON.parse(currentUserId), pathname);
   
       // Reset the form so the user can comment again
       form.reset();

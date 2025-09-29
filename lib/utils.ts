@@ -41,3 +41,16 @@ export function formatThreadCount(count: number): string {
     return `${threadCount} ${threadWord}`;
   }
 }
+
+// Profanity sanitizer using `bad-words` package
+// Returns cleaned text and whether profanity was found
+import { Filter } from "bad-words";
+
+export function sanitizeText(text: string) {
+  const filter = new Filter();
+  filter.addWords('BADWORD101')
+  const original = text || "";
+  const hasProfanity = filter.isProfane(original);
+  const cleaned = filter.clean(original);
+  return { cleaned, hasProfanity };
+}

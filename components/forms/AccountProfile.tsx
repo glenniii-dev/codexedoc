@@ -16,19 +16,20 @@ import { useUploadThing } from "@/lib/uploadthing";
 import { updateUser } from "@/lib/actions/user.actions";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { sanitizeText } from "@/lib/utils";
 
 type Props = {
   userId: string;
   objectId: string;
-  username: string;
   name: string;
   bio: string;
   image: string;
   btnTitle: string;
 };
 
-const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle }: Props) => {
+const AccountProfile = ({ userId, objectId, name, bio, image, btnTitle }: Props) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [buttonTitle, setButtonTitle] = useState(btnTitle);
   const { startUpload } = useUploadThing("media");
   const router = useRouter();
   const pathname = usePathname();
@@ -38,7 +39,6 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
     defaultValues: {
       profile_photo: image || '',
       name: name || '',
-      username: username || '',
       bio: bio || '',
     },
   })
@@ -91,6 +91,12 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
       image: values.profile_photo,
       path: pathname
     });
+
+    // Notify if profanity was filtered
+    const nameSan = sanitizeText(values.name || '');
+    const bioSan = sanitizeText(values.bio || '');
+    if (nameSan.hasProfanity) toast("Profanity was filtered from your name");
+    if (bioSan.hasProfanity) toast("Profanity was filtered from your bio");
 
     if (pathname === 'profile/edit') {
       router.back();
@@ -168,26 +174,6 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
 
         <FormField
           control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-3 w-full">
-              <FormLabel className="text-neutral-200 text-lg font-semibold">
-                Username
-              </FormLabel>
-              <FormControl className="border-none">
-                <Input 
-                  type="text"
-                  className="bg-neutral-800 text-white focus-visible:ring-0 focus-visible:ring-transparent focus-visible:ring-offset-0"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="bio"
           render={({ field }) => (
             <FormItem className="flex flex-col gap-3 w-full">
@@ -206,7 +192,10 @@ const AccountProfile = ({ userId, objectId, username, name, bio, image, btnTitle
           )}
         />
 
-        <Button type="submit" className="bg-neutral-700 hover:bg-neutral-800 font-semibold">Submit</Button>
+        <Button type="submit" className="bg-neutral-700 hover:bg-neutral-800 font-semibold" onClick={
+          () => setButtonTitle('Submitting...')     
+        }
+        >{buttonTitle}</Button>
       </form>
     </Form>
   )

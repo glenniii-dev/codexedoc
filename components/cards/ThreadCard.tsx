@@ -125,11 +125,13 @@ export default function ThreadCard(props: Props) {
             </Link>
 
             <p className="mt-2 text-sm text-neutral-200">
-              <Link href={`/thread/${id}`} className="flex flex-row gap-1">{content}</Link>
+              <Link href={`/thread/${id}`} className="block">
+                <span className="whitespace-pre-wrap break-words">{content}</span>
+              </Link>
             </p>
 
             <div className={`${isComment ? 'mb-8' : ''} mt-5 flex flex-row gap-3 `}>
-              <div className="flex gap-3.5 flex-row text-white items-center">
+              <div className="flex gap-4 flex-row text-white items-center">
                 <button className="flex flex-row gap-1 items-center" onClick={handleLike}>
                   <Image src={liked ? "/assets/heart-filled.svg" : "/assets/heart-gray.svg"} alt="heart" width={24} height={24} className="cursor-pointer" />
                   <span className="ml-1">{likeCount ?? 0}</span>

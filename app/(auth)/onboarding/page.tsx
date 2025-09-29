@@ -26,11 +26,10 @@ export default async function Page() {
         <AccountProfile
           userId={userData.id}
           objectId={userData.objectId}
-          username={userData.username}
           name={userData.name}
           bio={userData.bio}
           image={userData.image}
-          btnTitle="Continue"
+          btnTitle="Submit"
         />
       </section>
     </main>

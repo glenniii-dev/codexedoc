@@ -17,6 +17,7 @@ import { updateUser } from "@/lib/actions/user.actions";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import toast from "react-hot-toast";
+import { sanitizeText } from "@/lib/utils";
 
 type Props = {
   userId: string;
@@ -76,6 +77,24 @@ const UpdateProfile = ({ userId, objectId, username, name, bio, image, btnTitle 
 
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
     try {
+      // Sanitize inputs for profanity and notify the user if anything was filtered
+      const nameSan = sanitizeText(values.name || '');
+      const bioSan = sanitizeText(values.bio || '');
+      const usernameSan = sanitizeText(values.username || '');
+
+      if (nameSan.hasProfanity) {
+        values.name = nameSan.cleaned;
+        toast("Profanity was filtered from your name");
+      }
+      if (bioSan.hasProfanity) {
+        values.bio = bioSan.cleaned;
+        toast("Profanity was filtered from your bio");
+      }
+      if (usernameSan.hasProfanity) {
+        values.username = usernameSan.cleaned;
+        toast("Profanity was filtered from your username");
+      }
+
       // Update the user in the database
       await updateUser({
         userId: userId,
