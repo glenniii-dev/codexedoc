@@ -52,6 +52,48 @@ export async function updateUser({
         payload.publicMetadata = { ...(payload.publicMetadata || {}), profileImageUrl: image };
       }
 
+      // If we have publicMetadata, ensure we don't send very large data (like base64 images)
+      // Clerk limits public_metadata to 8KB. Strip data URLs or oversized fields to avoid 422 errors.
+      try {
+        if (payload.publicMetadata) {
+          const isDataUrl = (val: any) => typeof val === 'string' && val.startsWith('data:');
+          // If profileImageUrl is a data URL (base64) remove it — we'll let the client/Clerk SDK handle image uploads.
+          if (isDataUrl(payload.publicMetadata.profileImageUrl)) {
+            delete payload.publicMetadata.profileImageUrl;
+          }
+
+          // Compute byte size of publicMetadata and strip if dangerously close to Clerk's 8KB limit.
+          try {
+            const metaStr = JSON.stringify(payload.publicMetadata || {});
+            const metaSize = Buffer.byteLength(metaStr, 'utf8');
+            // Use a conservative threshold (7KB) to allow for other fields
+            if (metaSize > 7000) {
+              // Remove profileImageUrl if present (already attempted), then remove any very large string fields
+              for (const k of Object.keys(payload.publicMetadata)) {
+                const v = payload.publicMetadata[k];
+                if (typeof v === 'string' && Buffer.byteLength(v, 'utf8') > 2000) {
+                  delete payload.publicMetadata[k];
+                }
+              }
+
+              // If it's still too large, drop publicMetadata entirely to be safe
+              const newMetaStr = JSON.stringify(payload.publicMetadata || {});
+              if (Buffer.byteLength(newMetaStr, 'utf8') > 7500) {
+                delete payload.publicMetadata;
+              }
+            }
+          } catch (e) {
+            // ignore errors calculating size
+          }
+          // If publicMetadata ended up empty, remove it
+          if (payload.publicMetadata && Object.keys(payload.publicMetadata).length === 0) {
+            delete payload.publicMetadata;
+          }
+        }
+      } catch (e) {
+        // ignore protective stripping failures
+      }
+
       // Only call Clerk if there's something to update
       if (Object.keys(payload).length > 0) {
         await clerkClient.users.updateUser(userId, payload);
@@ -65,6 +107,17 @@ export async function updateUser({
       } catch (e) {}
       throw new Error(`Failed to update Clerk user: ${details}`);
     }
+
+    // Defensive: if `image` is a data URL (base64) and very large, strip it before saving
+    try {
+      if (typeof image === 'string' && image.startsWith('data:')) {
+        const size = Buffer.byteLength(image, 'utf8');
+        // If image base64 exceeds ~700KB, drop it here — client should upload via uploadthing instead
+        if (size > 700 * 1024) {
+          image = '';
+        }
+      }
+    } catch (e) {}
 
     await User.findOneAndUpdate(
       { id: userId },

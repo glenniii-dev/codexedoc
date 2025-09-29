@@ -31,6 +31,7 @@ type Props = {
 
 const UpdateProfile = ({ userId, objectId, username, name, bio, image, btnTitle }: Props) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [buttonTitle, setButtonTitle] = useState(btnTitle);
   const { startUpload } = useUploadThing("media");
   const router = useRouter();
   const pathname = usePathname();
@@ -76,6 +77,8 @@ const UpdateProfile = ({ userId, objectId, username, name, bio, image, btnTitle 
   }
 
   const onSubmit = async (values: z.infer<typeof UserValidation>) => {
+    setButtonTitle('Submitting...') // Set the button title to "Submitting..."
+    
     try {
       // Sanitize inputs for profanity and notify the user if anything was filtered
       const nameSan = sanitizeText(values.name || '');
