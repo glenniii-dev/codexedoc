@@ -47,11 +47,6 @@ export default function ForgotPasswordPage() {
         <h1 className="text-5xl mb-5 font-bold text-gradient">FORGOT PASSWORD?</h1>
         <h3 className="text-xl">Enter the follow credentials to access your account.</h3>
 
-        {/* Success message from sign-up */}
-        {successMessage && (
-          <p className="text-green-500! font-semibold mt-2">{decodeURIComponent(successMessage)}</p>
-        )}
-
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 sm:grid-cols-2 gap-10 w-full max-w-250"

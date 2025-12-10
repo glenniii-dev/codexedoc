@@ -41,12 +41,13 @@ export async function forgotPassword(formData: FormData) {
   const dbUser = user[0];
 
   // Check name
-  // if (name.toLowerCase() !== dbUser.name) {
-  //   throw new Error(JSON.stringify({ name: "Name does not match our records" }));
-  // }
+  if (name.toLowerCase() !== dbUser.name) {
+    throw new Error(JSON.stringify({ name: "Name does not match our records" }));
+  }
 
   // Check security code
-  if (securityCode !== dbUser.securityCode) {
+  const securityCodeMatch = await bcrypt.compare(securityCode, dbUser.securityCode);
+  if (!securityCodeMatch) {
     throw new Error(JSON.stringify({ securityCode: "Invalid security code" }));
   }
 
