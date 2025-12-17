@@ -1,7 +1,5 @@
-export default async function HubPage() {
+export default function HubPage() {
   return (
-    <div className="p-8">
-      HUB
-    </div>
-  );
+    <div>Explore</div>
+  )
 }

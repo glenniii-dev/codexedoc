@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "../db/db";
-import { users } from "../db/schema";
+import { users, userCodex } from "../db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -19,62 +19,41 @@ export async function signUp(formData: FormData) {
 
   const securityCode = (formData.get("securityCode") as string)?.trim();
 
+  const usernameRegex = /^[a-zA-Z0-9_-]+$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
   // Collect errors
   const errors: Record<string, string> = {};
 
-  if (!name || name.length < 1) {
-    errors.name = "Name is required";
-  }
+  if (!name || name.length < 1) errors.name = "Name is required";
+  if (!username || username.length < 3) errors.username = "Username must be at least 3 characters";
+  else if (username.length > 20) errors.username = "Username must be less than 20 characters";
+  else if (!usernameRegex.test(username)) errors.username = "Only letters, numbers, hyphens and underscores allowed";
 
-  if (!username || username.length < 3) {
-    errors.username = "Username must be at least 3 characters";
-  }
+  if (!password || password.length < 8) errors.password = "Password must be at least 8 characters";
+  else if (!passwordRegex.test(password)) errors.password = "Password must contain uppercase, lowercase, number & symbol";
+  if (password !== confirmPassword) errors.confirmPassword = "Passwords do not match";
 
-  if (!password || password.length < 8) {
-    errors.password = "Password must be at least 8 characters";
-  }
+  if (!securityAnswerOne || securityAnswerOne.length < 2) errors.securityAnswerOne = "Answer for question 1 is required";
+  if (!securityAnswerTwo || securityAnswerTwo.length < 2) errors.securityAnswerTwo = "Answer for question 2 is required";
 
-  if (password !== confirmPassword) {
-    errors.confirmPassword = "Passwords do not match";
-  }
+  if (!securityCode || securityCode.length < 12) errors.securityCode = "Security code must be at least 12 characters";
 
-  if (!securityAnswerOne || securityAnswerOne.length < 2) {
-    errors.securityAnswerOne = "Answer for question 1 is required";
-  }
-
-  if (!securityAnswerTwo || securityAnswerTwo.length < 2) {
-    errors.securityAnswerTwo = "Answer for question 2 is required";
-  }
-
-  if (!securityCode || securityCode.length < 12) {
-    errors.securityCode = "Security code must be at least 12 characters";
-  }
-
-  // If there are any validation errors, throw them
-  if (Object.keys(errors).length > 0) {
-    throw new Error(JSON.stringify(errors));
-  }
+  if (Object.keys(errors).length > 0) throw new Error(JSON.stringify(errors));
 
   // Check if username is taken
-  const existing = await db
-    .select()
-    .from(users)
-    .where(eq(users.username, username.toLowerCase()))
-    .limit(1);
+  const existing = await db.select().from(users).where(eq(users.username, username.toLowerCase())).limit(1);
+  if (existing.length > 0) throw new Error(JSON.stringify({ username: "Username is already taken" }));
 
-  if (existing.length > 0) {
-    throw new Error(JSON.stringify({ username: "Username is already taken" }));
-  }
-
-  // Hash everything securely
+  // Hash everything
   const hashedPassword = await bcrypt.hash(password, 12);
   const hashedAnswerOne = await bcrypt.hash(securityAnswerOne, 12);
   const hashedAnswerTwo = await bcrypt.hash(securityAnswerTwo, 12);
   const hashedSecurityCode = await bcrypt.hash(securityCode, 12);
 
-  // Insert new user into the database
   try {
-    await db.insert(users).values({
+    // Insert new user and get the inserted ID
+    const [newUser] = await db.insert(users).values({
       name: name.toLowerCase(),
       username: username.toLowerCase(),
       password: hashedPassword,
@@ -83,6 +62,12 @@ export async function signUp(formData: FormData) {
       securityQuestionTwo,
       securityAnswerTwo: hashedAnswerTwo,
       securityCode: hashedSecurityCode,
+    }).returning({ id: users.id }); // <-- returning inserted ID
+
+    // Create a codex for the new user
+    await db.insert(userCodex).values({
+      userId: newUser.id,
+      pages: [], // start with empty pages
     });
 
     revalidatePath("/sign-in");
