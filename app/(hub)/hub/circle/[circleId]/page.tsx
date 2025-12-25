@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import CircleClient from "@/components/page/CircleClient";
 import { getCircleData } from "@/utils/getCircleData";
 import { getCurrentUser } from "@/utils/getCurrentUser";

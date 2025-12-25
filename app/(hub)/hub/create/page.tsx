@@ -39,7 +39,7 @@ export default function CreateCirclePage() {
 
     try {
       const result = await createCircle(formData);
-      if (result?.success) router.push("/hub");
+      if (result?.success) router.push("/hub/");
     } catch (error: unknown) {
       setLoading(false);
       if (error instanceof Error) {
@@ -55,7 +55,7 @@ export default function CreateCirclePage() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-center w-full text-center mx-auto p-4">
+    <main className="flex flex-col items-center justify-center w-full text-center mx-auto p-4 max-md:pt-10">
       <h1 className="text-5xl font-bold text-gradient mb-2">CREATE CIRCLE</h1>
       <h3 className="text-xl mb-6">Create a new circle for your community.</h3>
 

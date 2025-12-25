@@ -73,6 +73,7 @@ export async function getCircleData(circleId: string): Promise<Circle | null> {
     id: m.id,
     userId: m.userId,
     message: m.message,
+    image: m.image,
     timestamp: m.timestamp,
   }));
 

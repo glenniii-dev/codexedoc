@@ -39,9 +39,12 @@ export async function uploadImage(file: File | Blob, folder: string) {
     ACL: "public-read",
   });
 
-  await client.send(command);
-
-  // Return proper URL
-  return `${process.env.R2_PUBLIC_URL}/${key}`;
+  try {
+    await client.send(command);
+    return `${process.env.R2_PUBLIC_URL}/${key}`;
+  } catch (error) {
+    console.error("R2 upload failed:", error);
+    throw error; // Important: re-throw so createMessage catches it
+  }
 
 }

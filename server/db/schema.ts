@@ -45,7 +45,8 @@ export const messages = pgTable("messages", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  message: text("message").notNull(),
+  message: text("message").notNull().default(""),
+  image: text("image"),
   timestamp: timestamp("timestamp", { mode: "string" }).defaultNow().notNull(),
 });
 

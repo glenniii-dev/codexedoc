@@ -39,22 +39,15 @@ export default function HubSidebar({ circles }: { circles: Circle[] }) {
     <>
       {/* Mobile toggle */}
       {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="
-            md:hidden
-            fixed top-0 left-0 z-50
-            w-screen h-10
-            px-3
-            bg-gradient
-            flex items-center gap-3
-            justify-between
-            text-white!
-          "
-        >
-          <FaBars size={18} />
-          <span className="text-sm font-medium capitalize">{currentPage}</span>
-        </button>
+        <div className="md:hidden fixed top-0 left-0 z-50 w-screen h-10 bg-background flex flex-col items-center">
+          <button
+            onClick={() => setOpen(true)}
+            className="h-full w-full px-3 flex items-center gap-3 justify-between text-gradient!">
+            <FaBars size={18} />
+            <span className="text-sm font-medium uppercase">{currentPage}</span>
+          </button>
+          <hr className="h-0.5 w-screen bg-gradient" />
+        </div>
       )}
 
       {/* Sidebar */}
@@ -96,10 +89,13 @@ export default function HubSidebar({ circles }: { circles: Circle[] }) {
               onClick={closeOnMobile}
               className="w-12 h-12 border border-white/20 p-1 flex items-center justify-center rounded-2xl"
             >
-              <img
+              <Image
+                width={1000}
+                height={1000}
                 src={circle.image}
                 alt={circle.name}
                 className="w-full h-full rounded-xl"
+                unoptimized
               />
             </Link>
           ))}

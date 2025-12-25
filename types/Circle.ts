@@ -30,6 +30,7 @@ export default interface Circle {
     id: string;
     userId: string;
     message: string;
+    image: string | null;
     timestamp: string;
   }[];
 }

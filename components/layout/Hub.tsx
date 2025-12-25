@@ -18,7 +18,7 @@ export default async function Hub({ children }: Readonly<{ children: React.React
         <div className="w-full flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5">
           {circles.map((circle) => (
               <div key={circle.id} className="w-12 h-12 border border-white/20 p-1 flex items-center justify-center rounded-2xl">
-                <img src={circle.image} alt={circle.name} width={1000} height={1000} className="w-full h-full" />
+                <Image src={circle.image} alt={circle.name} width={1000} height={1000} className="w-full h-full" unoptimized />
               </div>
           ))}
         </div>
